@@ -1,0 +1,23 @@
+html
+  head
+    link(rel="stylesheet" href="colour.css")
+    script(src="jquery-2.2.2.js")
+    script(src="colour.js")
+
+  body
+    h1 colour for the colourblind
+
+    form
+      label
+        input(type="range" min=0 max=200 id="r")
+        .sample.r
+      label
+        input(type="range" min=0 max=200 id="g")
+        .sample.g
+      label
+        input(type="range" min=0 max=200 id="b")
+        .sample.b
+
+    img(src="balloons.png" id="image")
+
+    canvas#picture
