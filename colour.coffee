@@ -3,9 +3,13 @@ $ ->
   canvas      = document.getElementById "picture"
   context     = canvas.getContext "2d"
   image       = document.getElementById "image"
-  draw_freq   = 20  # millisec, so really period: once every (say) 20 ms
+  draw_freq   = 40  # millisec, so really period: once every x ms
   window.draw_frames = 10  # how many frames should a pixel light up?
   window.r_weight = window.g_weight = window.b_weight = 100
+  # save 100*sin for performance
+  window.sin = []
+  for i in [0..100]
+    window.sin[i] = Math.round(100*Math.sin(2*Math.PI*i/100))
 
   $(image).on "load", ->
     context.drawImage(image,0,0,300,150)
@@ -61,8 +65,8 @@ $ ->
       # trunc to positive: 0..25500
       # normalize to ~ 1/5000..1/20 = 0,0002 - 0,05, so say:
       # frequency = (r_weight * r + g_weight * g + b_weight * b) / 500000
-      # so
-      period = Math.round(500000 / (r_w * r + g_w * g + b_w * b))
+      # educated guess:
+      period = Math.round(1000000 / (r_w * r + g_w * g + b_w * b))
 
   resetPeriods = ->
     pixeldata = window.pixeldata
@@ -77,19 +81,20 @@ $ ->
     pixels = window.pixels
     pixeldata = window.pixeldata
 
+    console.log pixeldata[403]
+
     for i in [0..pixels.length] by 4
+      timer = pixeldata[j+6]
+      period = pixeldata[j+5]
+      luminance = pixeldata[j+4]
 
-      # we flash the pixel for draw_frames frames, if its timer reaches its period
-      if pixeldata[j+6] + window.draw_frames > pixeldata[j+5]
-        # then we flash this pixel
-        l = pixeldata[j+4]
-        pixels[i] = pixels[i+1] = pixels[i+2] = l   # greyscaled flash to original luminance
-        # (this is the actual drawing)
-      else
-        pixels[i] = pixels[i+1] = pixels[i+2] = Math.round(0.5 * l)
+      intensity = luminance / 100 * (1 + window.sin[Math.round(100 * timer / period)])
 
-      # we check if the period is reached
-      if pixeldata[j+6] > pixeldata[j+5]
+      # (this is the actual drawing)
+      pixels[i] = pixels[i+1] = pixels[i+2] = intensity
+
+      # we check if the individual period is reached
+      if timer > period
         # reset individual timer
         pixeldata[j+6] = 0
 
